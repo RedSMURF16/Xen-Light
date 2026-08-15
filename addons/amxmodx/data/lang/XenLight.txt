@@ -1,0 +1,82 @@
+[en] -- RedSMURF
+LIGHT_CHAT_TAG                          = ^4[XEN LIGHT]^1
+LIGHT_CHAT_LIMIT                        = You've reached the maximum number of Lights ^4%d
+LIGHT_CHAT_NO_Light                     = There are no Lights available
+LIGHT_CHAT_CREATE_NEW                   = ^3%s ^1created
+LIGHT_CHAT_REMOVE_CURRENT               = ^3%s ^1removed
+LIGHT_CHAT_REMOVE_ALL                   = All Lights removed
+LIGHT_CHAT_SAVE                         = Light data saved in ^4%s
+LIGHT_CHAT_SHOW_CURRENT                 = ^3%s ^1is %L
+LIGHT_CHAT_SHOW_ALL_SHOWN               = All Lights are now Shown
+LIGHT_CHAT_SHOW_ALL_HIDDEN              = All Lights are now Hidden
+LIGHT_CHAT_STATUS_CURRENT               = ^3%s ^1is %L
+LIGHT_CHAT_STATUS_ALL_ENABLED           = All Lights are now Enabled
+LIGHT_CHAT_STATUS_ALL_DISABLED          = All Lights are now Disabled
+
+LIGHT_CHAT_SHOWN                        = Shown
+LIGHT_CHAT_HIDDEN                       = Hidden
+LIGHT_CHAT_ENABLED                      = Enabled
+LIGHT_CHAT_DISABLED                     = Disabled
+
+LIGHT_NAV_NEXT                          = Next
+LIGHT_NAV_BACK                          = Back
+LIGHT_ON                                = \y[ON]
+LIGHT_OFF                               = \r[OFF]
+LIGHT_SHOWN                             = \y[SHOWN]
+LIGHT_HIDDEN                            = \r[HIDDEN]
+LIGHT_ENABLED                           = \y[ENABLED]
+LIGHT_DISABLED                          = \r[DISABLED]
+LIGHT_ROTATE_PITCH                      = \r[PITCH]
+LIGHT_ROTATE_YAW                        = \y[YAW]
+LIGHT_ROTATE_ROLL                       = \d[ROLL]
+LIGHT_ROTATE_SMALL                      = \d[SMALL]
+LIGHT_ROTATE_MEDIUM                     = \d[MEDIUM]
+LIGHT_ROTATE_LARGE                      = \d[LARGE]
+LIGHT_COLOR_WHITE                       = \y[WHITE]
+LIGHT_COLOR_RED                         = \y[RED]
+LIGHT_COLOR_GREEN                       = \y[GREEN]
+LIGHT_COLOR_BLUE                        = \y[BLUE]
+LIGHT_COLOR_CYAN                        = \y[CYAN]
+LIGHT_COLOR_YELLOW                      = \y[YELLOW]
+LIGHT_COLOR_MAGENTA                     = \y[MAGENTA]
+LIGHT_COLOR_ORANGE                      = \y[ORANGE]
+LIGHT_COLOR_PURPLE                      = \y[PURPLE]
+LIGHT_COLOR_PINK                        = \y[PINK]
+LIGHT_COLOR_AQUA                        = \y[AQUA]
+LIGHT_COLOR_WARM                        = \y[WARM]
+
+LIGHT_MENU_TITLE                        = \dXen Light - Version \y%s
+LIGHT_MENU_TITLE_PAGE                   = \yPage:\r
+LIGHT_ROOT_CREATE                       = Create Light
+LIGHT_ROOT_REMOVE                       = Remove Light
+LIGHT_ROOT_SAVE                         = Save data
+LIGHT_ROOT_SHOW                         = Visibility settings
+LIGHT_ROOT_STATUS                       = Status settings
+LIGHT_ROOT_NOCLIP                       = Status noclip %L
+LIGHT_ROOT_GODMODE                      = Status godmode %L
+LIGHT_ROOT_ROTATE                       = Adjust rotation
+LIGHT_ROOT_LIGHT                        = Adjust light
+
+LIGHT_REMOVE_CURRENT                    = Remove Light >> \y%s
+LIGHT_REMOVE_ALL                        = Remove all Lights
+
+LIGHT_SHOW_CURRENT                      = Show Light >> %s%s %L
+LIGHT_SHOW_ALL_SHOW                     = Show all Lights
+LIGHT_SHOW_ALL_HIDE                     = Hide all Lights
+
+LIGHT_STATUS_CURRENT                    = Enable Light >> %s%s %L
+LIGHT_STATUS_ALL_ENABLE                 = Enable all Lights
+LIGHT_STATUS_ALL_DISABLE                = Disable all Lights
+
+LIGHT_ROTATE_UP                         = Turn Up
+LIGHT_ROTATE_DOWN                       = Turn Down
+LIGHT_ROTATE_GROUND                     = Set on ground >> %L
+LIGHT_ROTATE_MODE                       = Rotate Mode >> %L
+LIGHT_ROTATE_SIZE                       = Rotate Size >> %L
+LIGHT_ROTATE_PLACE                      = Place Light
+
+LIGHT_SCALE_UP                          = Scale Up
+LIGHT_SCALE_DOWN                        = Scale Down
+LIGHT_FACTOR                            = Scale Factor >> \r%d
+LIGHT_COLOR                             = Color >> %L
+LIGHT_PLACE                             = Place Light

@@ -390,59 +390,6 @@ public plugin_init()
     g_iMaxPlayers = get_maxplayers()
 }
 
-public cmdLight()
-{
-    new iLight = engfunc(EngFunc_CreateNamedEntity,
-        engfunc(EngFunc_AllocString, "info_target"))
-
-    if ( !pev_valid(iLight) )
-        return PLUGIN_HANDLED
-
-    new Float:fOrigin[3]
-    fOrigin[0] = 0.0
-    fOrigin[1] = 0.0
-    fOrigin[2] = 100.0
-
-    engfunc(EngFunc_SetOrigin, iLight, fOrigin)
-    engfunc(EngFunc_DropToFloor, iLight)
-    dllfunc(DLLFunc_Spawn, iLight)
-
-    set_pev(iLight, pev_framerate, 1.0)
-    engfunc(EngFunc_SetModel, iLight, g_eSettings[SETTING_MODEL_SMALL])
-
-    new iSprite = engfunc(EngFunc_CreateNamedEntity,
-        engfunc(EngFunc_AllocString, "env_sprite"))
-
-    if ( pev_valid(iSprite) )
-    {
-        engfunc(EngFunc_SetModel, iSprite, g_eSettings[SETTING_DEFAULT_GLOW_SPRITE])
-        set_pev(iSprite, pev_framerate, 60.0)
-        set_pev(iSprite, pev_spawnflags, SF_SPRITE_STARTON)
-
-        dllfunc(DLLFunc_Spawn, iSprite)
-
-        engfunc(EngFunc_SetOrigin, iSprite, fOrigin)
-
-        set_pev(iSprite, pev_movetype, MOVETYPE_FOLLOW)
-        set_pev(iSprite, pev_skin, iLight)
-        set_pev(iSprite, pev_body, 1)
-        set_pev(iSprite, pev_aiment, iLight)
-
-        set_pev(iSprite, pev_rendermode, kRenderTransAdd)
-        set_pev(iSprite, pev_renderamt, 255.0)
-
-        new Float:fColor[3]
-        fColor[0] = 216.0
-        fColor[1] = 220.0
-        fColor[2] = 235.0
-
-        set_pev(iSprite, pev_rendercolor, fColor)
-        set_pev(iSprite, pev_scale, 0.5)
-    }
-
-    return PLUGIN_HANDLED
-}
-
 public plugin_precache()
 {
     g_aLight = ArrayCreate(LIGHT)

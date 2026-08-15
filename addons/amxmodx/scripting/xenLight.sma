@@ -94,14 +94,13 @@ enum
     FLAG_SOLID              = (1 << 0),
     FLAG_ACTIVE_DELAY       = (1 << 1),
     FLAG_ACTIVE_DURATION    = (1 << 2),
-    FLAG_HIDE               = (1 << 3),
 
-    FLAG_SHOW               = (1 << 4),
-    FLAG_GHOST              = (1 << 5),
-    FLAG_GROUND             = (1 << 6),
-    FLAG_ACTIVE             = (1 << 7),
-    FLAG_LOCK               = (1 << 8),
-    FLAG_HIDDEN             = (1 << 9)
+    FLAG_SHOW               = (1 << 3),
+    FLAG_GHOST              = (1 << 4),
+    FLAG_GROUND             = (1 << 5),
+    FLAG_ACTIVE             = (1 << 6),
+    FLAG_LOCK               = (1 << 7),
+    FLAG_HIDDEN             = (1 << 8)
 }
 
 enum
@@ -205,10 +204,10 @@ enum _:LIGHT
     Float:LIGHT_GLOW_FRAMERATE,
     Float:LIGHT_GLOW_SCALE,
     LIGHT_GLOW_ALPHA,
-    LIGHT_DLIGHT_COLOR[3],
-    LIGHT_DLIGHT_SCALE,
     Float:LIGHT_HIDE_DISTANCE,
     Float:LIGHT_HIDE_DURATION[2],
+    LIGHT_DLIGHT_COLOR[3],
+    LIGHT_DLIGHT_SCALE,
 
     Float:LIGHT_NEXT_ENABLE,
     Float:LIGHT_NEXT_DISABLE,
@@ -1503,7 +1502,7 @@ public lightTask()
             if ( eLight[LIGHT_FLAGS] & FLAG_ACTIVE )
             {
                 lightDraw(eLight)
-                if ( eLight[LIGHT_FLAGS] & FLAG_HIDE
+                if ( eLight[LIGHT_TEAM] != TEAM_BOTH
                 && !(eLight[LIGHT_FLAGS] & FLAG_LOCK) )
                 {
                     lightDistance(eLight, fCurrentTime, true)
@@ -1863,35 +1862,36 @@ public fwdPreThink(id)
     iButton = pev(id, pev_button)
     fCurrentTime = get_gametime()
 
-    if ( g_ePlayerData[id][PDATA_LIGHT_GHOST]
-    && lightGet(eLight, g_ePlayerData[id][PDATA_LIGHT_GHOST]) != -1
+    if ( lightGet(eLight, g_ePlayerData[id][PDATA_LIGHT_GHOST]) != -1
     && !(eLight[LIGHT_FLAGS] & FLAG_LOCK) )
     {
-        if ( fCurrentTime > g_ePlayerData[id][PDATA_NEXT_OFFSET] )
+        if ( g_ePlayerData[id][PDATA_LIGHT_GHOST] )
         {
-            if ( iButton & IN_ATTACK )
+            if ( fCurrentTime > g_ePlayerData[id][PDATA_NEXT_OFFSET] )
             {
-                g_ePlayerData[id][PDATA_OFFSET]      += g_eSettings[SETTING_OFFSET_STEP]
-                g_ePlayerData[id][PDATA_OFFSET]      = floatclamp(g_ePlayerData[id][PDATA_OFFSET], g_eSettings[SETTING_OFFSET][0], g_eSettings[SETTING_OFFSET][1])
-                g_ePlayerData[id][PDATA_NEXT_OFFSET] = fCurrentTime + 0.1
+                if ( iButton & IN_ATTACK )
+                {
+                    g_ePlayerData[id][PDATA_OFFSET]      += g_eSettings[SETTING_OFFSET_STEP]
+                    g_ePlayerData[id][PDATA_OFFSET]      = floatclamp(g_ePlayerData[id][PDATA_OFFSET], g_eSettings[SETTING_OFFSET][0], g_eSettings[SETTING_OFFSET][1])
+                    g_ePlayerData[id][PDATA_NEXT_OFFSET] = fCurrentTime + 0.1
+                }
+                else if ( iButton & IN_ATTACK2 )
+                {
+                    g_ePlayerData[id][PDATA_OFFSET]      -= g_eSettings[SETTING_OFFSET_STEP]
+                    g_ePlayerData[id][PDATA_OFFSET]      = floatclamp(g_ePlayerData[id][PDATA_OFFSET], g_eSettings[SETTING_OFFSET][0], g_eSettings[SETTING_OFFSET][1])
+                    g_ePlayerData[id][PDATA_NEXT_OFFSET] = fCurrentTime + 0.1
+                }
             }
-            else if ( iButton & IN_ATTACK2 )
-            {
-                g_ePlayerData[id][PDATA_OFFSET]      -= g_eSettings[SETTING_OFFSET_STEP]
-                g_ePlayerData[id][PDATA_OFFSET]      = floatclamp(g_ePlayerData[id][PDATA_OFFSET], g_eSettings[SETTING_OFFSET][0], g_eSettings[SETTING_OFFSET][1])
-                g_ePlayerData[id][PDATA_NEXT_OFFSET] = fCurrentTime + 0.1
-            }
+
+            iButton &= ~(IN_ATTACK | IN_ATTACK2)
+            set_pev(id, pev_button, iButton)
+
+            lightTrace(eLight, id)
         }
-
-        iButton &= ~(IN_ATTACK | IN_ATTACK2)
-        set_pev(id, pev_button, iButton)
-
-        lightTrace(eLight, id)
-    }
-    else if ( g_ePlayerData[id][PDATA_LIGHT_ACTION]
-    && !(eLight[LIGHT_FLAGS] & FLAG_LOCK) )
-    {
-        lightCheck(id)
+        else if ( g_ePlayerData[id][PDATA_LIGHT_ACTION] )
+        {
+            lightCheck(id)
+        }
     }
 
     return HAM_IGNORED
@@ -2007,7 +2007,7 @@ stock lightDistance(eLight[LIGHT], Float:fCurrentTime, bool:bSetState)
     for ( new id = 1; id <= g_iMaxPlayers; id ++ )
     {
         if ( !is_user_alive(id)
-        || !(CsTeams:eLight[LIGHT_TEAM] & cs_get_user_team(id)) )
+        || CsTeams:eLight[LIGHT_TEAM] & cs_get_user_team(id) )
             continue
 
         pev(id, pev_origin, fOrigin)

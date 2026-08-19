@@ -78,11 +78,11 @@ enum
     DTYPE_INT_RANGE,
     DTYPE_FLOAT,
     DTYPE_FLOAT_RANGE,
-    DTYPE_VECTOR,
-    DTYPE_VECTOR_FLOAT,
+    DTYPE_INT_LIST,
+    DTYPE_FLOAT_LIST,
     DTYPE_BOOL,
     DTYPE_FLAGS,
-    DTYPE_ARRAY_MESSAGE,
+    DTYPE_ARRAY_STRING,
     DTYPE_ARRAY_SOUND,
     DTYPE_STRING_MODEL,
     DTYPE_STRING_SOUND,
@@ -94,13 +94,15 @@ enum
     FLAG_SOLID              = (1 << 0),
     FLAG_ACTIVE_DELAY       = (1 << 1),
     FLAG_ACTIVE_DURATION    = (1 << 2),
+    FLAG_REVERSE            = (1 << 3),
+    FLAG_COLOR_RANDOM       = (1 << 4),
 
-    FLAG_SHOW               = (1 << 3),
-    FLAG_GHOST              = (1 << 4),
-    FLAG_GROUND             = (1 << 5),
-    FLAG_ACTIVE             = (1 << 6),
-    FLAG_LOCK               = (1 << 7),
-    FLAG_HIDDEN             = (1 << 8)
+    FLAG_SHOW               = (1 << 5),
+    FLAG_GHOST              = (1 << 6),
+    FLAG_GROUND             = (1 << 7),
+    FLAG_ACTIVE             = (1 << 8),
+    FLAG_LOCK               = (1 << 9),
+    FLAG_PENDING            = (1 << 10)
 }
 
 enum
@@ -148,8 +150,9 @@ enum _:MAIN_SETTINGS
     Float:SETTING_DEFAULT_GLOW_FRAMERATE,
     Float:SETTING_DEFAULT_GLOW_SCALE[3],
     SETTING_DEFAULT_GLOW_ALPHA,
-    Float:SETTING_DEFAULT_HIDE_DISTANCE,
-    Float:SETTING_DEFAULT_HIDE_DURATION[2],
+    Float:SETTING_DEFAULT_TRIGGER_DISTANCE,
+    Float:SETTING_DEFAULT_TRIGGER_DURATION[2],
+    Float:SETTING_DEFAULT_COLOR_FREQUENCY[2],
 
     SETTING_MODEL_SMALL[MAX_RESOURCE_PATH_LENGTH],
     SETTING_MODEL_MEDIUM[MAX_RESOURCE_PATH_LENGTH],
@@ -204,14 +207,18 @@ enum _:LIGHT
     Float:LIGHT_GLOW_FRAMERATE,
     Float:LIGHT_GLOW_SCALE,
     LIGHT_GLOW_ALPHA,
-    Float:LIGHT_HIDE_DISTANCE,
-    Float:LIGHT_HIDE_DURATION[2],
+    Float:LIGHT_TRIGGER_DISTANCE,
+    Float:LIGHT_TRIGGER_DURATION[2],
+    Float:LIGHT_COLOR_FREQUENCY[2],
     LIGHT_DLIGHT_COLOR[3],
     LIGHT_DLIGHT_SCALE,
 
     Float:LIGHT_NEXT_ENABLE,
     Float:LIGHT_NEXT_DISABLE,
-    Float:LIGHT_NEXT_IDLE
+    Float:LIGHT_NEXT_SHOW,
+    Float:LIGHT_NEXT_HIDE,
+    Float:LIGHT_NEXT_IDLE,
+    Float:LIGHT_NEXT_RANDOM
 }
 
 enum _:PLAYER_DATA
@@ -241,6 +248,7 @@ enum
 {
     MENU_ROOT,
     MENU_CREATE,
+    MENU_EDIT,
     MENU_REMOVE,
     MENU_SHOW,
     MENU_STATUS,
@@ -251,14 +259,18 @@ enum
 enum
 {
     ROOT_CREATE,
+    ROOT_EDIT,
     ROOT_REMOVE,
     ROOT_SAVE,
 
-    ROOT_SHOW = 4,
-    ROOT_STATUS,
-
-    ROOT_NOCLIP = 7,
+    ROOT_NOCLIP = 5,
     ROOT_GODMODE
+}
+
+enum
+{
+    EDIT_SHOW,
+    EDIT_STATUS
 }
 
 enum
@@ -325,6 +337,7 @@ new g_szMenuHandler[][MAX_VALUE_LENGTH] =
 {
     "menuHandlerRoot",
     "menuHandlerCreate",
+    "menuHandlerEdit",
     "menuHandlerRemove",
     "menuHandlerShow",
     "menuHandlerStatus",
@@ -462,6 +475,7 @@ ReadFile()
                 UpdateData(id)
 
         ArrayClear(g_aLightConfig)
+        g_iLightConfig = 0
     }
 
     new szFile[MAX_RESOURCE_PATH_LENGTH], iFile
@@ -509,21 +523,23 @@ ReadFile()
 
                         copy(eLight[LIGHT_NAME], charsmax(eLight[LIGHT_NAME]), szData)
                         copy(eLight[LIGHT_GLOW_SPRITE], charsmax(eLight[LIGHT_GLOW_SPRITE]), g_eSettings[SETTING_DEFAULT_GLOW_SPRITE])
-                        eLight[LIGHT_FLAGS]               = g_eSettings[SETTING_DEFAULT_FLAGS]
-                        eLight[LIGHT_TEAM]                = g_eSettings[SETTING_DEFAULT_TEAM]
-                        eLight[LIGHT_FRAMERATE]           = g_eSettings[SETTING_DEFAULT_FRAMERATE]
-                        eLight[LIGHT_SPAWN_CHANCE]        = g_eSettings[SETTING_DEFAULT_SPAWN_CHANCE]
-                        eLight[LIGHT_ACTIVE_DELAY][0]     = g_eSettings[SETTING_DEFAULT_ACTIVE_DELAY][0]
-                        eLight[LIGHT_ACTIVE_DELAY][1]     = g_eSettings[SETTING_DEFAULT_ACTIVE_DELAY][1]
-                        eLight[LIGHT_ACTIVE_DURATION][0]  = g_eSettings[SETTING_DEFAULT_ACTIVE_DURATION][0]
-                        eLight[LIGHT_ACTIVE_DURATION][1]  = g_eSettings[SETTING_DEFAULT_ACTIVE_DURATION][1]
-                        eLight[LIGHT_ACTIVE_COOLDOWN][0]  = g_eSettings[SETTING_DEFAULT_ACTIVE_COOLDOWN][0]
-                        eLight[LIGHT_ACTIVE_COOLDOWN][1]  = g_eSettings[SETTING_DEFAULT_ACTIVE_COOLDOWN][1]
-                        eLight[LIGHT_GLOW_FRAMERATE]      = g_eSettings[SETTING_DEFAULT_GLOW_FRAMERATE]
-                        eLight[LIGHT_GLOW_ALPHA]          = g_eSettings[SETTING_DEFAULT_GLOW_ALPHA]
-                        eLight[LIGHT_HIDE_DISTANCE]       = g_eSettings[SETTING_DEFAULT_HIDE_DISTANCE]
-                        eLight[LIGHT_HIDE_DURATION][0]    = g_eSettings[SETTING_DEFAULT_HIDE_DURATION][0]
-                        eLight[LIGHT_HIDE_DURATION][1]    = g_eSettings[SETTING_DEFAULT_HIDE_DURATION][1]
+                        eLight[LIGHT_FLAGS]                 = g_eSettings[SETTING_DEFAULT_FLAGS]
+                        eLight[LIGHT_TEAM]                  = g_eSettings[SETTING_DEFAULT_TEAM]
+                        eLight[LIGHT_FRAMERATE]             = g_eSettings[SETTING_DEFAULT_FRAMERATE]
+                        eLight[LIGHT_SPAWN_CHANCE]          = g_eSettings[SETTING_DEFAULT_SPAWN_CHANCE]
+                        eLight[LIGHT_ACTIVE_DELAY][0]       = g_eSettings[SETTING_DEFAULT_ACTIVE_DELAY][0]
+                        eLight[LIGHT_ACTIVE_DELAY][1]       = g_eSettings[SETTING_DEFAULT_ACTIVE_DELAY][1]
+                        eLight[LIGHT_ACTIVE_DURATION][0]    = g_eSettings[SETTING_DEFAULT_ACTIVE_DURATION][0]
+                        eLight[LIGHT_ACTIVE_DURATION][1]    = g_eSettings[SETTING_DEFAULT_ACTIVE_DURATION][1]
+                        eLight[LIGHT_ACTIVE_COOLDOWN][0]    = g_eSettings[SETTING_DEFAULT_ACTIVE_COOLDOWN][0]
+                        eLight[LIGHT_ACTIVE_COOLDOWN][1]    = g_eSettings[SETTING_DEFAULT_ACTIVE_COOLDOWN][1]
+                        eLight[LIGHT_GLOW_FRAMERATE]        = g_eSettings[SETTING_DEFAULT_GLOW_FRAMERATE]
+                        eLight[LIGHT_GLOW_ALPHA]            = g_eSettings[SETTING_DEFAULT_GLOW_ALPHA]
+                        eLight[LIGHT_TRIGGER_DISTANCE]      = g_eSettings[SETTING_DEFAULT_TRIGGER_DISTANCE]
+                        eLight[LIGHT_TRIGGER_DURATION][0]   = g_eSettings[SETTING_DEFAULT_TRIGGER_DURATION][0]
+                        eLight[LIGHT_TRIGGER_DURATION][1]   = g_eSettings[SETTING_DEFAULT_TRIGGER_DURATION][1]
+                        eLight[LIGHT_COLOR_FREQUENCY][0]    = g_eSettings[SETTING_DEFAULT_COLOR_FREQUENCY][0]
+                        eLight[LIGHT_COLOR_FREQUENCY][1]    = g_eSettings[SETTING_DEFAULT_COLOR_FREQUENCY][1]
 
                         iSection = SECTION_LIGHT
                         g_iLightConfig ++
@@ -574,13 +590,15 @@ ReadFile()
                         else if ( equali(szKey, "SETTING_DEFAULT_GLOW_FRAMERATE") )
                             parseSetting(DTYPE_FLOAT, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_DEFAULT_GLOW_FRAMERATE], charsmax(g_eSettings[SETTING_DEFAULT_GLOW_FRAMERATE]))
                         else if ( equali(szKey, "SETTING_DEFAULT_GLOW_SCALE") )
-                            parseSetting(DTYPE_VECTOR_FLOAT, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_DEFAULT_GLOW_SCALE], charsmax(g_eSettings[SETTING_DEFAULT_GLOW_SCALE]))
+                            parseSetting(DTYPE_FLOAT_LIST, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_DEFAULT_GLOW_SCALE], charsmax(g_eSettings[SETTING_DEFAULT_GLOW_SCALE]))
                         else if ( equali(szKey, "SETTING_DEFAULT_GLOW_ALPHA") )
                             parseSetting(DTYPE_INT, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_DEFAULT_GLOW_ALPHA], charsmax(g_eSettings[SETTING_DEFAULT_GLOW_ALPHA]))
-                        else if ( equali(szKey, "SETTING_DEFAULT_HIDE_DISTANCE") )
-                            parseSetting(DTYPE_FLOAT, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_DEFAULT_HIDE_DISTANCE], charsmax(g_eSettings[SETTING_DEFAULT_HIDE_DISTANCE]))
-                        else if ( equali(szKey, "SETTING_DEFAULT_HIDE_DURATION") )
-                            parseSetting(DTYPE_FLOAT_RANGE, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_DEFAULT_HIDE_DURATION], charsmax(g_eSettings[SETTING_DEFAULT_HIDE_DURATION]))
+                        else if ( equali(szKey, "SETTING_DEFAULT_TRIGGER_DISTANCE") )
+                            parseSetting(DTYPE_FLOAT, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_DEFAULT_TRIGGER_DISTANCE], charsmax(g_eSettings[SETTING_DEFAULT_TRIGGER_DISTANCE]))
+                        else if ( equali(szKey, "SETTING_DEFAULT_TRIGGER_DURATION") )
+                            parseSetting(DTYPE_FLOAT_RANGE, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_DEFAULT_TRIGGER_DURATION], charsmax(g_eSettings[SETTING_DEFAULT_TRIGGER_DURATION]))
+                        else if ( equali(szKey, "SETTING_DEFAULT_COLOR_FREQUENCY") )
+                            parseSetting(DTYPE_FLOAT_RANGE, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_DEFAULT_COLOR_FREQUENCY], charsmax(g_eSettings[SETTING_DEFAULT_COLOR_FREQUENCY]))
                         else if ( equali(szKey, "SETTING_MODEL_SMALL") )
                             parseSetting(DTYPE_STRING_MODEL, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_MODEL_SMALL], charsmax(g_eSettings[SETTING_MODEL_SMALL]))
                         else if ( equali(szKey, "SETTING_MODEL_MEDIUM") )
@@ -588,17 +606,17 @@ ReadFile()
                         else if ( equali(szKey, "SETTING_MODEL_LARGE") )
                             parseSetting(DTYPE_STRING_MODEL, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_MODEL_LARGE], charsmax(g_eSettings[SETTING_MODEL_LARGE]))
                         else if ( equali(szKey, "SETTING_MINS_SMALL") )
-                            parseSetting(DTYPE_VECTOR_FLOAT, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_MINS_SMALL], charsmax(g_eSettings[SETTING_MINS_SMALL]))
+                            parseSetting(DTYPE_FLOAT_LIST, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_MINS_SMALL], charsmax(g_eSettings[SETTING_MINS_SMALL]))
                         else if ( equali(szKey, "SETTING_MAXS_SMALL") )
-                            parseSetting(DTYPE_VECTOR_FLOAT, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_MAXS_SMALL], charsmax(g_eSettings[SETTING_MAXS_SMALL]))
+                            parseSetting(DTYPE_FLOAT_LIST, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_MAXS_SMALL], charsmax(g_eSettings[SETTING_MAXS_SMALL]))
                         else if ( equali(szKey, "SETTING_MINS_MEDIUM") )
-                            parseSetting(DTYPE_VECTOR_FLOAT, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_MINS_MEDIUM], charsmax(g_eSettings[SETTING_MINS_MEDIUM]))
+                            parseSetting(DTYPE_FLOAT_LIST, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_MINS_MEDIUM], charsmax(g_eSettings[SETTING_MINS_MEDIUM]))
                         else if ( equali(szKey, "SETTING_MAXS_MEDIUM") )
-                            parseSetting(DTYPE_VECTOR_FLOAT, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_MAXS_MEDIUM], charsmax(g_eSettings[SETTING_MAXS_MEDIUM]))
+                            parseSetting(DTYPE_FLOAT_LIST, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_MAXS_MEDIUM], charsmax(g_eSettings[SETTING_MAXS_MEDIUM]))
                         else if ( equali(szKey, "SETTING_MINS_LARGE") )
-                            parseSetting(DTYPE_VECTOR_FLOAT, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_MINS_LARGE], charsmax(g_eSettings[SETTING_MINS_LARGE]))
+                            parseSetting(DTYPE_FLOAT_LIST, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_MINS_LARGE], charsmax(g_eSettings[SETTING_MINS_LARGE]))
                         else if ( equali(szKey, "SETTING_MAXS_LARGE") )
-                            parseSetting(DTYPE_VECTOR_FLOAT, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_MAXS_LARGE], charsmax(g_eSettings[SETTING_MAXS_LARGE]))
+                            parseSetting(DTYPE_FLOAT_LIST, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_MAXS_LARGE], charsmax(g_eSettings[SETTING_MAXS_LARGE]))
                         else if ( equali(szKey, "SETTING_LIGHT_LOAD") )
                             parseSetting(DTYPE_BOOL, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_LIGHT_LOAD], charsmax(g_eSettings[SETTING_LIGHT_LOAD]))
                         else if ( equali(szKey, "SETTING_LIGHT_CHECK") )
@@ -624,9 +642,9 @@ ReadFile()
                         else if ( equali(szKey, "SETTING_SOUND_MENU_ALERT") )
                             parseSetting(DTYPE_STRING_SOUND, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_SOUND_MENU_ALERT], charsmax(g_eSettings[SETTING_SOUND_MENU_ALERT]))
                         else if ( equali(szKey, "SETTING_COLOR_ACTIVE") )
-                            parseSetting(DTYPE_VECTOR, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_COLOR_ACTIVE], charsmax(g_eSettings[SETTING_COLOR_ACTIVE]))
+                            parseSetting(DTYPE_INT_LIST, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_COLOR_ACTIVE], charsmax(g_eSettings[SETTING_COLOR_ACTIVE]))
                         else if ( equali(szKey, "SETTING_COLOR_INACTIVE") )
-                            parseSetting(DTYPE_VECTOR, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_COLOR_INACTIVE], charsmax(g_eSettings[SETTING_COLOR_INACTIVE]))
+                            parseSetting(DTYPE_INT_LIST, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_COLOR_INACTIVE], charsmax(g_eSettings[SETTING_COLOR_INACTIVE]))
                     }
                     case SECTION_LIGHT:
                     {
@@ -650,10 +668,12 @@ ReadFile()
                             parseSetting(DTYPE_FLOAT, szKey, charsmax(szKey), szValue, charsmax(szValue), eLight[LIGHT_GLOW_FRAMERATE], charsmax(eLight[LIGHT_GLOW_FRAMERATE]), g_eSettings[SETTING_DEFAULT_GLOW_FRAMERATE])
                         else if ( equali(szKey, "LIGHT_GLOW_ALPHA") )
                             parseSetting(DTYPE_INT, szKey, charsmax(szKey), szValue, charsmax(szValue), eLight[LIGHT_GLOW_ALPHA], charsmax(eLight[LIGHT_GLOW_ALPHA]), g_eSettings[SETTING_DEFAULT_GLOW_ALPHA])
-                        else if ( equali(szKey, "LIGHT_HIDE_DISTANCE") )
-                            parseSetting(DTYPE_FLOAT, szKey, charsmax(szKey), szValue, charsmax(szValue), eLight[LIGHT_HIDE_DISTANCE], charsmax(eLight[LIGHT_HIDE_DISTANCE]), g_eSettings[SETTING_DEFAULT_HIDE_DISTANCE])
-                        else if ( equali(szKey, "LIGHT_HIDE_DURATION") )
-                            parseSetting(DTYPE_FLOAT_RANGE, szKey, charsmax(szKey), szValue, charsmax(szValue), eLight[LIGHT_HIDE_DURATION], charsmax(eLight[LIGHT_HIDE_DURATION]), g_eSettings[SETTING_DEFAULT_HIDE_DURATION])
+                        else if ( equali(szKey, "LIGHT_TRIGGER_DISTANCE") )
+                            parseSetting(DTYPE_FLOAT, szKey, charsmax(szKey), szValue, charsmax(szValue), eLight[LIGHT_TRIGGER_DISTANCE], charsmax(eLight[LIGHT_TRIGGER_DISTANCE]), g_eSettings[SETTING_DEFAULT_TRIGGER_DISTANCE])
+                        else if ( equali(szKey, "LIGHT_TRIGGER_DURATION") )
+                            parseSetting(DTYPE_FLOAT_RANGE, szKey, charsmax(szKey), szValue, charsmax(szValue), eLight[LIGHT_TRIGGER_DURATION], charsmax(eLight[LIGHT_TRIGGER_DURATION]), g_eSettings[SETTING_DEFAULT_TRIGGER_DURATION])
+                        else if ( equali(szKey, "LIGHT_COLOR_FREQUENCY") )
+                            parseSetting(DTYPE_FLOAT_RANGE, szKey, charsmax(szKey), szValue, charsmax(szValue), eLight[LIGHT_COLOR_FREQUENCY], charsmax(eLight[LIGHT_COLOR_FREQUENCY]), g_eSettings[SETTING_DEFAULT_COLOR_FREQUENCY])
                     }
                 }
             }
@@ -694,13 +714,28 @@ public UpdateData(id)
     g_ePlayerData[id][PDATA_OFFSET] = g_eSettings[SETTING_OFFSET_BASE]
 }
 
-public lightInit()
+stock lightInit()
 {
     if ( g_eSettings[SETTING_LIGHT_LOAD] )
         set_task(DELAY_ON_LOAD, "loadData")
 }
 
-public lightMenu(id, iType)
+stock lightTerminate()
+{
+    new eLight[LIGHT]
+    for ( new i = 0; i < g_iLight; i ++ )
+    {
+        ArrayGetArray(g_aLight, i, eLight)
+        if ( !(eLight[LIGHT_FLAGS] & FLAG_PENDING) )
+            continue
+
+        eLight[LIGHT_FLAGS] |= FLAG_ACTIVE
+        eLight[LIGHT_FLAGS] &= ~FLAG_PENDING
+        ArraySetArray(g_aLight, i, eLight)
+    }
+}
+
+stock lightMenu(id, iType)
 {
     if ( !is_user_connected(id) )
         return PLUGIN_HANDLED
@@ -712,6 +747,7 @@ public lightMenu(id, iType)
     {
         case MENU_ROOT:   { menuRoot(id, iMenu); }
         case MENU_CREATE: { menuCreate(iMenu);      format(szData, charsmax(szData), "%s^n%L", szData, id, "LIGHT_ROOT_CREATE"); }
+        case MENU_EDIT:   { menuEdit(id, iMenu);    format(szData, charsmax(szData), "%s^n%L", szData, id, "LIGHT_ROOT_EDIT"); }
         case MENU_REMOVE: { menuRemove(id, iMenu);  format(szData, charsmax(szData), "%s^n%L", szData, id, "LIGHT_ROOT_REMOVE"); }
         case MENU_SHOW:   { menuShow(id, iMenu);    format(szData, charsmax(szData), "%s^n%L", szData, id, "LIGHT_ROOT_SHOW"); }
         case MENU_STATUS: { menuStatus(id, iMenu);  format(szData, charsmax(szData), "%s^n%L", szData, id, "LIGHT_ROOT_STATUS"); }
@@ -748,18 +784,13 @@ public menuRoot(id, iMenu)
     formatex(szItem, charsmax(szItem), "%L", id, "LIGHT_ROOT_CREATE")
     menu_additem(iMenu, szItem)
 
+    formatex(szItem, charsmax(szItem), "%L", id, "LIGHT_ROOT_EDIT")
+    menu_additem(iMenu, szItem)
+
     formatex(szItem, charsmax(szItem), "%L", id, "LIGHT_ROOT_REMOVE")
     menu_additem(iMenu, szItem)
 
     formatex(szItem, charsmax(szItem), "%L", id, "LIGHT_ROOT_SAVE")
-    menu_additem(iMenu, szItem)
-
-    menu_addblank2(iMenu)
-
-    formatex(szItem, charsmax(szItem), "%L", id, "LIGHT_ROOT_SHOW")
-    menu_additem(iMenu, szItem)
-
-    formatex(szItem, charsmax(szItem), "%L", id, "LIGHT_ROOT_STATUS")
     menu_additem(iMenu, szItem)
 
     menu_addblank2(iMenu)
@@ -796,6 +827,21 @@ public menuHandlerRoot(id, menu, item)
                 lightMenu(id, MENU_CREATE)
             }
         }
+        case ROOT_EDIT:
+        {
+            if ( !g_iLight )
+            {
+                client_print_color(id, id, "%L %L", id, "LIGHT_CHAT_TAG", id, "LIGHT_CHAT_NO_LIGHT")
+
+                lightSound(id, SOUND_MENU_REMOVE)
+                lightMenu(id, MENU_ROOT)
+            }
+            else
+            {
+                lightSound(id, SOUND_MENU_NAV)
+                lightMenu(id, MENU_EDIT)
+            }
+        }
         case ROOT_REMOVE:
         {
             if ( !g_iLight )
@@ -814,36 +860,6 @@ public menuHandlerRoot(id, menu, item)
         case ROOT_SAVE:
         {
             saveData(id)
-        }
-        case ROOT_SHOW:
-        {
-            if ( !g_iLight )
-            {
-                client_print_color(id, id, "%L %L", id, "LIGHT_CHAT_TAG", id, "LIGHT_CHAT_NO_LIGHT")
-
-                lightSound(id, SOUND_MENU_REMOVE)
-                lightMenu(id, MENU_ROOT)
-            }
-            else
-            {
-                lightSound(id, SOUND_MENU_NAV)
-                lightMenu(id, MENU_SHOW)
-            }
-        }
-        case ROOT_STATUS:
-        {
-            if ( !g_iLight )
-            {
-                client_print_color(id, id, "%L %L", id, "LIGHT_CHAT_TAG", id, "LIGHT_CHAT_NO_LIGHT")
-
-                lightSound(id, SOUND_MENU_REMOVE)
-                lightMenu(id, MENU_ROOT)
-            }
-            else
-            {
-                lightSound(id, SOUND_MENU_NAV)
-                lightMenu(id, MENU_STATUS)
-            }
         }
         case ROOT_NOCLIP:
         {
@@ -890,6 +906,41 @@ public menuHandlerCreate(id, menu, item)
     lightCreate(id, item)
     lightSound(id, SOUND_MENU_NAV)
     lightMenu(id, MENU_ROTATE)
+
+    menu_destroy(menu)
+    return PLUGIN_HANDLED
+}
+
+public menuEdit(id, iMenu)
+{
+    new szItem[64]
+    formatex(szItem, charsmax(szItem), "%L", id, "LIGHT_EDIT_SHOW")
+    menu_additem(iMenu, szItem)
+
+    formatex(szItem, charsmax(szItem), "%L", id, "LIGHT_EDIT_STATUS")
+    menu_additem(iMenu, szItem)
+}
+
+public menuHandlerEdit(id, menu, item)
+{
+    switch( item )
+    {
+        case EDIT_SHOW:
+        {
+            lightSound(id, SOUND_MENU_NAV)
+            lightMenu(id, MENU_SHOW)
+        }
+        case EDIT_STATUS:
+        {
+            lightSound(id, SOUND_MENU_NAV)
+            lightMenu(id, MENU_STATUS)
+        }
+        case MENU_EXIT:
+        {
+            lightSound(id, SOUND_MENU_NAV)
+            lightMenu(id, MENU_ROOT)
+        }
+    }
 
     menu_destroy(menu)
     return PLUGIN_HANDLED
@@ -1337,9 +1388,13 @@ public menuHandlerRotate(id, menu, item)
         {
             lightTrace(eLight, id)
 
-            eLight[LIGHT_FLAGS] |= (FLAG_SHOW | FLAG_ACTIVE | FLAG_LOCK)
+            eLight[LIGHT_FLAGS] |= (FLAG_SHOW | FLAG_LOCK)
             eLight[LIGHT_FLAGS] &= ~FLAG_GHOST
             eLight[LIGHT_ANGLES][0] = -eLight[LIGHT_ANGLES][0]
+            if ( !(eLight[LIGHT_FLAGS] & FLAG_REVERSE) )
+                eLight[LIGHT_FLAGS] |= FLAG_ACTIVE
+            else
+                eLight[LIGHT_FLAGS] |= FLAG_PENDING
             lightSetSize(eLight)
             ArraySetArray(g_aLight, iItem, eLight)
 
@@ -1505,7 +1560,7 @@ public lightTask()
                 if ( eLight[LIGHT_TEAM] != TEAM_BOTH
                 && !(eLight[LIGHT_FLAGS] & FLAG_LOCK) )
                 {
-                    lightDistance(eLight, fCurrentTime, true)
+                    lightDistance(eLight, fCurrentTime, eLight[LIGHT_FLAGS] & FLAG_REVERSE ? false : true)
                     bModified = true
                 }
 
@@ -1518,10 +1573,34 @@ public lightTask()
                     bModified = true
                 }
 
+                if ( eLight[LIGHT_NEXT_RANDOM] > 0.0
+                && fCurrentTime >= eLight[LIGHT_NEXT_RANDOM] )
+                {
+                    new iColor = random(sizeof(g_iLightColors))
+                    eLight[LIGHT_DLIGHT_COLOR][0] = g_iLightColors[iColor][0]
+                    eLight[LIGHT_DLIGHT_COLOR][1] = g_iLightColors[iColor][1]
+                    eLight[LIGHT_DLIGHT_COLOR][2] = g_iLightColors[iColor][2]
+                    eLight[LIGHT_NEXT_RANDOM] = fCurrentTime + random_float(eLight[LIGHT_COLOR_FREQUENCY][0], eLight[LIGHT_COLOR_FREQUENCY][1])
+
+                    bModified = true
+                }
+
+                if ( eLight[LIGHT_NEXT_HIDE] > 0.0
+                && fCurrentTime >= eLight[LIGHT_NEXT_HIDE] )
+                {
+                    eLight[LIGHT_FLAGS] &= ~FLAG_ACTIVE
+                    eLight[LIGHT_FLAGS] |= FLAG_PENDING
+                    eLight[LIGHT_NEXT_HIDE] = 0.0
+
+                    lightSetState(eLight)
+                    bModified = true
+                }
+
                 if ( eLight[LIGHT_NEXT_DISABLE] > 0.0
                 && fCurrentTime >= eLight[LIGHT_NEXT_DISABLE] )
                 {
                     eLight[LIGHT_FLAGS] &= ~FLAG_ACTIVE
+                    eLight[LIGHT_FLAGS] |= FLAG_PENDING
                     eLight[LIGHT_NEXT_DISABLE] = 0.0
                     eLight[LIGHT_NEXT_ENABLE] = fCurrentTime + random_float(eLight[LIGHT_ACTIVE_COOLDOWN][0], eLight[LIGHT_ACTIVE_COOLDOWN][1])
 
@@ -1531,9 +1610,27 @@ public lightTask()
             }
             else
             {
-                if ( eLight[LIGHT_FLAGS] & FLAG_HIDDEN )
+                if ( eLight[LIGHT_FLAGS] & FLAG_REVERSE
+                && eLight[LIGHT_FLAGS] & FLAG_LOCK )
+                    lightDraw(eLight)
+
+                if ( eLight[LIGHT_FLAGS] & FLAG_PENDING
+                && !(eLight[LIGHT_FLAGS] & FLAG_LOCK) )
                 {
-                    lightDistance(eLight, fCurrentTime, false)
+                    lightDistance(eLight, fCurrentTime, eLight[LIGHT_FLAGS] & FLAG_REVERSE ? true : false)
+                    bModified = true
+                }
+
+                if ( eLight[LIGHT_NEXT_SHOW] > 0.0
+                && fCurrentTime >= eLight[LIGHT_NEXT_SHOW] )
+                {
+                    eLight[LIGHT_FLAGS] |= FLAG_ACTIVE
+                    eLight[LIGHT_NEXT_SHOW] = 0.0
+
+                    lightSetState(eLight)
+                    eLight[LIGHT_FLAGS] &= ~FLAG_PENDING
+                    eLight[LIGHT_NEXT_IDLE] = fCurrentTime + (LIGHT_DEPLOY_DURATION / eLight[LIGHT_FRAMERATE])
+
                     bModified = true
                 }
 
@@ -1546,11 +1643,8 @@ public lightTask()
                         eLight[LIGHT_NEXT_DISABLE] = fCurrentTime + random_float(eLight[LIGHT_ACTIVE_DURATION][0], eLight[LIGHT_ACTIVE_DURATION][1])
 
                     lightSetState(eLight)
-                    if ( eLight[LIGHT_FLAGS] & FLAG_HIDDEN )
-                    {
-                        eLight[LIGHT_FLAGS] &= ~FLAG_HIDDEN
-                        eLight[LIGHT_NEXT_IDLE] = fCurrentTime + (LIGHT_DEPLOY_DURATION / eLight[LIGHT_FRAMERATE])
-                    }
+                    eLight[LIGHT_FLAGS] &= ~FLAG_PENDING
+                    eLight[LIGHT_NEXT_IDLE] = fCurrentTime + (LIGHT_DEPLOY_DURATION / eLight[LIGHT_FRAMERATE])
 
                     bModified = true
                 }
@@ -1564,7 +1658,7 @@ public lightTask()
 
 stock lightCreate(id, iItem)
 {
-    new iEnt = engfunc(EngFunc_CreateNamedEntity, engfunc(EngFunc_AllocString, "info_target"))
+    new iEnt = cs_create_entity("info_target")
     if ( !pev_valid(iEnt) )
         return
 
@@ -1613,7 +1707,7 @@ stock lightCreate(id, iItem)
 
 stock lightCreateGlow(eLight[LIGHT])
 {
-    new iEnt = engfunc(EngFunc_CreateNamedEntity, engfunc(EngFunc_AllocString, "env_sprite"))
+    new iEnt = cs_create_entity("env_sprite")
     if ( !pev_valid(iEnt) )
         return
 
@@ -1662,6 +1756,7 @@ public saveData(id)
     if ( !iFile )
         return PLUGIN_HANDLED
 
+    lightTerminate()
     for ( new i = 0; i < g_iLight; i ++ )
     {
         ArrayGetArray(g_aLight, i, eLight)
@@ -1987,7 +2082,7 @@ stock lightCheck(id)
 
 stock lightDraw(eLight[LIGHT])
 {
-    message_begin_f(MSG_BROADCAST, SVC_TEMPENTITY)
+    message_begin_f(MSG_PVS, SVC_TEMPENTITY, eLight[LIGHT_ORIGIN_GLOW])
     write_byte(TE_DLIGHT)
     write_coord_f(eLight[LIGHT_ORIGIN_GLOW][0])
     write_coord_f(eLight[LIGHT_ORIGIN_GLOW][1])
@@ -2003,23 +2098,38 @@ stock lightDraw(eLight[LIGHT])
 
 stock lightDistance(eLight[LIGHT], Float:fCurrentTime, bool:bSetState)
 {
-    new Float:fOrigin[3]
-    for ( new id = 1; id <= g_iMaxPlayers; id ++ )
+    new Float:fOrigin[3], id
+    for ( id = 1; id <= g_iMaxPlayers; id ++ )
     {
         if ( !is_user_alive(id)
         || CsTeams:eLight[LIGHT_TEAM] & cs_get_user_team(id) )
             continue
 
         pev(id, pev_origin, fOrigin)
-        if ( xs_vec_distance(fOrigin, eLight[LIGHT_ORIGIN]) > eLight[LIGHT_HIDE_DISTANCE] )
+        if ( xs_vec_distance(fOrigin, eLight[LIGHT_ORIGIN]) > eLight[LIGHT_TRIGGER_DISTANCE] )
             continue
 
-        eLight[LIGHT_FLAGS] &= ~FLAG_ACTIVE
-        eLight[LIGHT_FLAGS] |= FLAG_HIDDEN
-        eLight[LIGHT_NEXT_ENABLE] = fCurrentTime + random_float(eLight[LIGHT_HIDE_DURATION][0], eLight[LIGHT_HIDE_DURATION][1])
+        if ( eLight[LIGHT_FLAGS] & FLAG_REVERSE )
+        {
+            eLight[LIGHT_FLAGS] |= FLAG_ACTIVE
+            eLight[LIGHT_NEXT_HIDE] = fCurrentTime + random_float(eLight[LIGHT_TRIGGER_DURATION][0], eLight[LIGHT_TRIGGER_DURATION][1])
+        }
+        else
+        {
+            eLight[LIGHT_FLAGS] &= ~FLAG_ACTIVE
+            eLight[LIGHT_NEXT_SHOW] = fCurrentTime + random_float(eLight[LIGHT_TRIGGER_DURATION][0], eLight[LIGHT_TRIGGER_DURATION][1])
+        }
+
         if ( bSetState )
+        {
             lightSetState(eLight)
 
+            if ( eLight[LIGHT_FLAGS] & FLAG_REVERSE )
+                eLight[LIGHT_NEXT_IDLE] = fCurrentTime + (LIGHT_DEPLOY_DURATION / eLight[LIGHT_FRAMERATE])
+        }
+
+        if ( eLight[LIGHT_FLAGS] & FLAG_REVERSE ) eLight[LIGHT_FLAGS] &= ~FLAG_PENDING
+        else                                      eLight[LIGHT_FLAGS] |= FLAG_PENDING
         break
     }
 }
@@ -2035,7 +2145,7 @@ stock lightSetBox(eLight[LIGHT])
     switch( eLight[LIGHT_SIZE] )
     {
         case SIZE_SMALL:    { xs_vec_copy(g_eSettings[SETTING_MINS_SMALL], fMins);  xs_vec_copy(g_eSettings[SETTING_MAXS_SMALL], fMaxs); }
-        case SIZE_MEDIUM:   { xs_vec_copy(g_eSettings[SETTING_MINS_MEDIUM], fMins);    xs_vec_copy(g_eSettings[SETTING_MAXS_MEDIUM], fMaxs); }
+        case SIZE_MEDIUM:   { xs_vec_copy(g_eSettings[SETTING_MINS_MEDIUM], fMins); xs_vec_copy(g_eSettings[SETTING_MAXS_MEDIUM], fMaxs); }
         case SIZE_LARGE:    { xs_vec_copy(g_eSettings[SETTING_MINS_LARGE], fMins);  xs_vec_copy(g_eSettings[SETTING_MAXS_LARGE], fMaxs); }
     }
 
@@ -2139,7 +2249,7 @@ stock lightSetState(eLight[LIGHT])
         lightSelect(eLight, TARGET_CLEAR)
         if ( eLight[LIGHT_FLAGS] & FLAG_ACTIVE )
         {
-            lightSetSeq(eLight[LIGHT_ID], eLight[LIGHT_FRAMERATE], eLight[LIGHT_FLAGS] & FLAG_HIDDEN ? LIGHT_SEQ_DEPLOY : LIGHT_SEQ_IDLE)
+            lightSetSeq(eLight[LIGHT_ID], eLight[LIGHT_FRAMERATE], eLight[LIGHT_FLAGS] & FLAG_PENDING ? LIGHT_SEQ_DEPLOY : LIGHT_SEQ_IDLE)
             set_ent_rendering(eLight[LIGHT_GLOW], kRenderFxNone, eLight[LIGHT_DLIGHT_COLOR][0], eLight[LIGHT_DLIGHT_COLOR][1], eLight[LIGHT_DLIGHT_COLOR][2], kRenderTransAdd, eLight[LIGHT_GLOW_ALPHA])
         }
         else
@@ -2178,6 +2288,9 @@ stock lightSetDelay(eLight[LIGHT])
                 eLight[LIGHT_NEXT_DISABLE] = fCurrentTime + random_float(eLight[LIGHT_ACTIVE_DURATION][0], eLight[LIGHT_ACTIVE_DURATION][1])
         }
     }
+
+    if ( eLight[LIGHT_FLAGS] & FLAG_COLOR_RANDOM )
+        eLight[LIGHT_NEXT_RANDOM] = get_gametime() + random_float(eLight[LIGHT_COLOR_FREQUENCY][0], eLight[LIGHT_COLOR_FREQUENCY][1])
 }
 
 stock lightSelect(eLight[LIGHT], iAction)
@@ -2234,7 +2347,10 @@ stock lightReset(eLight[LIGHT])
     eLight[LIGHT_FLAGS] &= ~(FLAG_SHOW | FLAG_ACTIVE)
     eLight[LIGHT_NEXT_ENABLE] = 0.0
     eLight[LIGHT_NEXT_DISABLE] = 0.0
+    eLight[LIGHT_NEXT_SHOW] = 0.0
+    eLight[LIGHT_NEXT_HIDE] = 0.0
     eLight[LIGHT_NEXT_IDLE] = 0.0
+    eLight[LIGHT_NEXT_RANDOM] = 0.0
 
     lightSetState(eLight)
 }
@@ -2261,89 +2377,101 @@ stock lightKill(iEnt)
         set_pev(iEnt, pev_flags, pev(iEnt, pev_flags) | FL_KILLME)
 }
 
-stock parseSetting(iType, szKey[], iKeyLen, szValue[], iValueLen, any:output[], iOutputLen, const any:fallback[] = {0.0, 0.0})
+stock parseSetting(iType, szKey[], iKeyLen, szValue[], iValueLen, any:aOutput[], iOutputLength, const any:aFallback[] = {0.0, 0.0})
 {
     switch ( iType )
     {
-        case DTYPE_FLOAT_RANGE:
+        case DTYPE_INT:
         {
-            strtok(szValue, szKey, iKeyLen, szValue, iValueLen, ' ')
-            output[0] = str_to_float(szKey)
-            output[1] = str_to_float(szValue)
-
-            if ( output[0] < 0.0 ) output[0] = fallback[0]
-            if ( output[1] < 0.0 ) output[1] = fallback[1]
-        }
-        case DTYPE_FLOAT:
-        {
-            output[0] = str_to_float(szValue)
-            if ( output[0] < 0.0 ) output[0] = fallback[0]
+            aOutput[0] = str_to_num(szValue)
+            if ( aOutput[0] < 0 ) aOutput[0] = aFallback[0]
         }
         case DTYPE_INT_RANGE:
         {
             strtok(szValue, szKey, iKeyLen, szValue, iValueLen, ' ')
-            output[0] = str_to_num(szKey)
-            output[1] = str_to_num(szValue)
+            aOutput[0] = str_to_num(szKey)
+            aOutput[1] = str_to_num(szValue)
 
-            if ( output[0] < 0 ) output[0] = fallback[0]
-            if ( output[1] < 0 ) output[1] = fallback[1]
+            if ( aOutput[0] < 0 ) aOutput[0] = aFallback[0]
+            if ( aOutput[1] < 0 ) aOutput[1] = aFallback[1]
         }
-        case DTYPE_INT:
+        case DTYPE_FLOAT:
         {
-            output[0] = str_to_num(szValue)
-            if ( output[0] < 0 ) output[0] = fallback[0]
+            aOutput[0] = str_to_float(szValue)
+            if ( aOutput[0] < 0.0 ) aOutput[0] = aFallback[0]
+        }
+        case DTYPE_FLOAT_RANGE:
+        {
+            strtok(szValue, szKey, iKeyLen, szValue, iValueLen, ' ')
+            aOutput[0] = str_to_float(szKey)
+            aOutput[1] = str_to_float(szValue)
+
+            if ( aOutput[0] < 0.0 ) aOutput[0] = aFallback[0]
+            if ( aOutput[1] < 0.0 ) aOutput[1] = aFallback[1]
+        }
+        case DTYPE_INT_LIST:
+        {
+            new szTok[MAX_VALUE_LENGTH], szTmp[MAX_VALUE_LENGTH], iCounter
+            copy(szTmp, charsmax(szTmp), szValue)
+
+            strtok(szTmp, szTok, charsmax(szTok), szTmp, charsmax(szTmp), ' ')
+            trim(szTok)
+            while ( szTok[0] )
+            {
+                aOutput[iCounter ++] = str_to_num(szTok)
+
+                strtok(szTmp, szTok, charsmax(szTok), szTmp, charsmax(szTmp), ' ')
+                trim(szTok)
+            }
+        }
+        case DTYPE_FLOAT_LIST:
+        {
+            new szTok[MAX_VALUE_LENGTH], szTmp[MAX_VALUE_LENGTH], iCounter
+            copy(szTmp, charsmax(szTmp), szValue)
+
+            strtok(szTmp, szTok, charsmax(szTok), szTmp, charsmax(szTmp), ' ')
+            trim(szTok)
+            while ( szTok[0] )
+            {
+                aOutput[iCounter ++] = str_to_float(szTok)
+
+                strtok(szTmp, szTok, charsmax(szTok), szTmp, charsmax(szTmp), ' ')
+                trim(szTok)
+            }
         }
         case DTYPE_BOOL:
         {
-            output[0] = bool:str_to_num(szValue)
+            aOutput[0] = bool:str_to_num(szValue)
         }
         case DTYPE_FLAGS:
         {
-            output[0] = read_flags(szValue)
+            aOutput[0] = read_flags(szValue)
         }
-        case DTYPE_VECTOR:
-        {
-            strtok(szValue, szKey, iKeyLen, szValue, iValueLen, ' ')
-            output[0] = str_to_num(szKey)
-
-            strtok(szValue, szKey, iKeyLen, szValue, iValueLen, ' ')
-            output[1] = str_to_num(szKey)
-            output[2] = str_to_num(szValue)
-        }
-        case DTYPE_VECTOR_FLOAT:
-        {
-            strtok(szValue, szKey, iKeyLen, szValue, iValueLen, ' ')
-            output[0] = str_to_float(szKey)
-
-            strtok(szValue, szKey, iKeyLen, szValue, iValueLen, ' ')
-            output[1] = str_to_float(szKey)
-            output[2] = str_to_float(szValue)
-        }
-        case DTYPE_ARRAY_MESSAGE:
+        case DTYPE_ARRAY_STRING:
         {
             replace_all(szValue, iValueLen, "^"", " ")
             replace_all(szValue, iValueLen, "^^n", "^n")
-            ArrayPushString(output[0], szValue)
+            ArrayPushString(aOutput[0], szValue)
         }
         case DTYPE_ARRAY_SOUND:
         {
-            ArrayPushString(output[0], szValue)
+            ArrayPushString(aOutput[0], szValue)
             if ( !g_bFileWasRead ) precache_sound(szValue)
         }
         case DTYPE_STRING_MODEL:
         {
-            copy(output, iOutputLen, szValue)
+            copy(aOutput, iOutputLength, szValue)
             if ( !g_bFileWasRead ) precache_model(szValue)
         }
         case DTYPE_STRING_SOUND:
         {
-            copy(output, iOutputLen, szValue)
+            copy(aOutput, iOutputLength, szValue)
             if ( !g_bFileWasRead ) precache_sound(szValue)
         }
         case DTYPE_STRING_MODEL_ID:
         {
             if ( !g_bFileWasRead )
-                output[0] = precache_model(szValue)
+                aOutput[0] = precache_model(szValue)
         }
     }
 }
@@ -2399,6 +2527,7 @@ stock EnableForward()
 stock DisableForward()
 {
     unregister_forward(FM_UpdateClientData, g_iFwdUpdateClientData, 1)
+    DisableHamForward(g_iFwdSpawn)
     DisableHamForward(g_iFwdPreThink)
     DisableHamForward(g_iFwdKilled)
 }

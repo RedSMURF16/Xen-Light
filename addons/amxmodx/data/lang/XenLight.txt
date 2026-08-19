@@ -1,7 +1,7 @@
 [en] -- RedSMURF
 LIGHT_CHAT_TAG                          = ^4[XEN LIGHT]^1
 LIGHT_CHAT_LIMIT                        = You've reached the maximum number of Lights ^4%d
-LIGHT_CHAT_NO_Light                     = There are no Lights available
+LIGHT_CHAT_NO_LIGHT                     = There are no Lights available
 LIGHT_CHAT_CREATE_NEW                   = ^3%s ^1created
 LIGHT_CHAT_REMOVE_CURRENT               = ^3%s ^1removed
 LIGHT_CHAT_REMOVE_ALL                   = All Lights removed
@@ -48,6 +48,7 @@ LIGHT_COLOR_WARM                        = \y[WARM]
 LIGHT_MENU_TITLE                        = \dXen Light - Version \y%s
 LIGHT_MENU_TITLE_PAGE                   = \yPage:\r
 LIGHT_ROOT_CREATE                       = Create Light
+LIGHT_ROOT_EDIT                         = Edit Light
 LIGHT_ROOT_REMOVE                       = Remove Light
 LIGHT_ROOT_SAVE                         = Save Data
 LIGHT_ROOT_SHOW                         = Visibility Settings
@@ -56,6 +57,9 @@ LIGHT_ROOT_NOCLIP                       = Status Noclip %L
 LIGHT_ROOT_GODMODE                      = Status Godmode %L
 LIGHT_ROOT_ROTATE                       = Adjust Rotation
 LIGHT_ROOT_LIGHT                        = Adjust Light
+
+LIGHT_EDIT_SHOW                         = Edit Show
+LIGHT_EDIT_STATUS                       = Edit Status
 
 LIGHT_REMOVE_CURRENT                    = Remove Light >> \y%s
 LIGHT_REMOVE_ALL                        = Remove all Lights

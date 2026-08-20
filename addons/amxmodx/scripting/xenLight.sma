@@ -139,7 +139,6 @@ enum _:MAIN_SETTINGS
 {
     SETTING_DEFAULT_FLAGS,
     SETTING_DEFAULT_TEAM,
-    SETTING_DEFAULT_SIZE,
     Float:SETTING_DEFAULT_FRAMERATE,
 
     Float:SETTING_DEFAULT_SPAWN_CHANCE,
@@ -575,8 +574,6 @@ ReadFile()
                             parseSetting(DTYPE_INT, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_DEFAULT_TEAM], charsmax(g_eSettings[SETTING_DEFAULT_TEAM]))
                         else if ( equali(szKey, "SETTING_DEFAULT_FRAMERATE") )
                             parseSetting(DTYPE_FLOAT, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_DEFAULT_FRAMERATE], charsmax(g_eSettings[SETTING_DEFAULT_FRAMERATE]))
-                        else if ( equali(szKey, "SETTING_DEFAULT_SIZE") )
-                            parseSetting(DTYPE_INT, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_DEFAULT_SIZE], charsmax(g_eSettings[SETTING_DEFAULT_SIZE]))
                         else if ( equali(szKey, "SETTING_DEFAULT_SPAWN_CHANCE") )
                             parseSetting(DTYPE_FLOAT, szKey, charsmax(szKey), szValue, charsmax(szValue), g_eSettings[SETTING_DEFAULT_SPAWN_CHANCE], charsmax(g_eSettings[SETTING_DEFAULT_SPAWN_CHANCE]))
                         else if ( equali(szKey, "SETTING_DEFAULT_ACTIVE_DELAY") )
@@ -726,7 +723,8 @@ stock lightTerminate()
     for ( new i = 0; i < g_iLight; i ++ )
     {
         ArrayGetArray(g_aLight, i, eLight)
-        if ( !(eLight[LIGHT_FLAGS] & FLAG_PENDING) )
+        if ( !(eLight[LIGHT_FLAGS] & FLAG_PENDING)
+        || eLight[LIGHT_FLAGS] & FLAG_REVERSE )
             continue
 
         eLight[LIGHT_FLAGS] |= FLAG_ACTIVE
@@ -1670,7 +1668,6 @@ stock lightCreate(id, iItem)
         g_ePlayerData[id][PDATA_ROTATE_MODE] = ROTATE_MODE_YAW
         g_ePlayerData[id][PDATA_OFFSET] = g_eSettings[SETTING_OFFSET_BASE]
 
-        eLight[LIGHT_SIZE] = g_ePlayerData[id][PDATA_ROTATE_SIZE] = g_eSettings[SETTING_DEFAULT_SIZE]
         eLight[LIGHT_FLAGS] |= FLAG_GHOST
     }
 

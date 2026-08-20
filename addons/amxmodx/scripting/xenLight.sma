@@ -384,7 +384,7 @@ public plugin_init()
     register_clcmd("say /xenlight",         "cmdMenu", ADMIN_RCON, "-- Opens the Xen Light menu.")
     register_clcmd("say_team /xenlight",    "cmdMenu", ADMIN_RCON, "-- Opens the Xen Light menu.")
     register_concmd("xl_reload",            "cmdReload", ADMIN_RCON, "-- Reloads the configuration file")
-    register_concmd("xenlight_reload",    "cmdReload", ADMIN_RCON, "-- Reloads the configuration file")
+    register_concmd("xenlight_reload",      "cmdReload", ADMIN_RCON, "-- Reloads the configuration file")
 
     register_dictionary("XenLight.txt")
 
@@ -1552,8 +1552,7 @@ public lightTask()
             if ( eLight[LIGHT_FLAGS] & FLAG_ACTIVE )
             {
                 lightDraw(eLight)
-                if ( eLight[LIGHT_TEAM] != TEAM_BOTH
-                && !(eLight[LIGHT_FLAGS] & FLAG_LOCK) )
+                if ( !(eLight[LIGHT_FLAGS] & FLAG_LOCK) )
                 {
                     lightDistance(eLight, fCurrentTime, eLight[LIGHT_FLAGS] & FLAG_REVERSE ? false : true)
                     bModified = true

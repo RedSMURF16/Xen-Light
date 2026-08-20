@@ -995,7 +995,6 @@ public menuHandlerRemove(id, menu, item)
         }
         case REMOVE_CURRENT:
         {
-            eLight[LIGHT_FLAGS] &= ~FLAG_ACTIVE
             lightSetState(eLight)
             lightKill(eLight[LIGHT_ID])
             lightKill(eLight[LIGHT_GLOW])
@@ -1012,8 +1011,6 @@ public menuHandlerRemove(id, menu, item)
             while( g_iLight )
             {
                 ArrayGetArray(g_aLight, 0, eLight)
-                eLight[LIGHT_FLAGS] &= ~FLAG_ACTIVE
-
                 lightSetState(eLight)
                 lightKill(eLight[LIGHT_ID])
                 lightKill(eLight[LIGHT_GLOW])
@@ -2102,7 +2099,8 @@ stock lightDistance(eLight[LIGHT], Float:fCurrentTime, bool:bSetState)
     for ( id = 1; id <= g_iMaxPlayers; id ++ )
     {
         if ( !is_user_alive(id)
-        || CsTeams:eLight[LIGHT_TEAM] & cs_get_user_team(id) )
+        || ( !(eLight[LIGHT_FLAGS] & FLAG_REVERSE) && CsTeams:eLight[LIGHT_TEAM] & cs_get_user_team(id))
+        || ( eLight[LIGHT_FLAGS] & FLAG_REVERSE && !(CsTeams:eLight[LIGHT_TEAM] & cs_get_user_team(id))) )
             continue
 
         pev(id, pev_origin, fOrigin)

@@ -58,7 +58,7 @@ LIGHT_ROOT_GODMODE                      = Status Godmode %L
 LIGHT_ROOT_ROTATE                       = Adjust Rotation
 LIGHT_ROOT_LIGHT                        = Adjust Light
 
-LIGHT_EDIT_SHOW                         = Edit Show
+LIGHT_EDIT_SHOW                         = Edit Visibility
 LIGHT_EDIT_STATUS                       = Edit Status
 
 LIGHT_REMOVE_CURRENT                    = Remove Light >> \y%s

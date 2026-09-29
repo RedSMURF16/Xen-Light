@@ -2208,6 +2208,9 @@ stock lightSound(iEnt, iSound, bool:bPlayer = true)
 
 stock lightGet(eLight[LIGHT], iEnt)
 {
+    if ( !isLight(iEnt) )
+        return -1
+
     new iItem
     iItem = pev(iEnt, LIGHT_ARRAY_ITEM)
     if ( iItem < 0 || iItem >= g_iLight )

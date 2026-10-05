@@ -1021,6 +1021,8 @@ public menuHandlerShow(id, menu, item)
         case SHOW_CURRENT:
         {
             eLight[LIGHT_FLAGS] ^= FLAG_SHOW
+            if ( !(eLight[LIGHT_FLAGS] & FLAG_SHOW) )
+                eLight[LIGHT_FLAGS] &= ~FLAG_ACTIVE
             lightSetState(eLight)
 
             client_print_color(id, id, "%L %L", id, "LIGHT_CHAT_TAG", id, "LIGHT_CHAT_SHOW_CURRENT",
@@ -1051,6 +1053,7 @@ public menuHandlerShow(id, menu, item)
             {
                 ArrayGetArray(g_aLight, i, eLight)
                 eLight[LIGHT_FLAGS] &= ~FLAG_SHOW
+                eLight[LIGHT_FLAGS] &= ~FLAG_ACTIVE
                 lightSetState(eLight)
 
                 ArraySetArray(g_aLight, i, eLight)
@@ -1469,74 +1472,71 @@ public lightTask()
         ArrayGetArray(g_aLight, i, eLight)
         bModified = false
 
-        if ( eLight[LIGHT_FLAGS] & FLAG_SHOW )
+        if ( eLight[LIGHT_FLAGS] & FLAG_ACTIVE )
         {
-            if ( eLight[LIGHT_FLAGS] & FLAG_ACTIVE )
+            lightDraw(eLight)
+            if ( !(eLight[LIGHT_FLAGS] & FLAG_LOCK) )
             {
-                lightDraw(eLight)
-                if ( !(eLight[LIGHT_FLAGS] & FLAG_LOCK) )
-                {
-                    lightDistance(eLight, fCurrentTime, eLight[LIGHT_FLAGS] & FLAG_REVERSE ? false : true)
-                    bModified = true
-                }
-
-                if ( eLight[LIGHT_NEXT_IDLE] > 0.0
-                && fCurrentTime >= eLight[LIGHT_NEXT_IDLE] )
-                {
-                    eLight[LIGHT_NEXT_IDLE] = 0.0
-                    lightSetSeq(eLight[LIGHT_ID], eLight[LIGHT_FRAMERATE], LIGHT_SEQ_IDLE)
-
-                    bModified = true
-                }
-
-                if ( eLight[LIGHT_NEXT_RANDOM] > 0.0
-                && fCurrentTime >= eLight[LIGHT_NEXT_RANDOM] )
-                {
-                    new iColor = random(sizeof(g_iLightColors))
-                    eLight[LIGHT_DLIGHT_COLOR][0] = g_iLightColors[iColor][0]
-                    eLight[LIGHT_DLIGHT_COLOR][1] = g_iLightColors[iColor][1]
-                    eLight[LIGHT_DLIGHT_COLOR][2] = g_iLightColors[iColor][2]
-                    eLight[LIGHT_NEXT_RANDOM] = fCurrentTime + random_float(eLight[LIGHT_COLOR_FREQUENCY][0], eLight[LIGHT_COLOR_FREQUENCY][1])
-
-                    bModified = true
-                }
-
-                if ( eLight[LIGHT_NEXT_HIDE] > 0.0
-                && fCurrentTime >= eLight[LIGHT_NEXT_HIDE] )
-                {
-                    eLight[LIGHT_FLAGS] &= ~FLAG_ACTIVE
-                    eLight[LIGHT_FLAGS] |= FLAG_PENDING
-                    eLight[LIGHT_NEXT_HIDE] = 0.0
-
-                    lightSetState(eLight)
-                    bModified = true
-                }
+                lightDistance(eLight, fCurrentTime, eLight[LIGHT_FLAGS] & FLAG_REVERSE ? false : true)
+                bModified = true
             }
-            else
+
+            if ( eLight[LIGHT_NEXT_IDLE] > 0.0
+            && fCurrentTime >= eLight[LIGHT_NEXT_IDLE] )
             {
-                if ( eLight[LIGHT_FLAGS] & FLAG_REVERSE
-                && eLight[LIGHT_FLAGS] & FLAG_LOCK )
-                    lightDraw(eLight)
+                eLight[LIGHT_NEXT_IDLE] = 0.0
+                lightSetSeq(eLight[LIGHT_ID], eLight[LIGHT_FRAMERATE], LIGHT_SEQ_IDLE)
 
-                if ( eLight[LIGHT_FLAGS] & FLAG_PENDING
-                && !(eLight[LIGHT_FLAGS] & FLAG_LOCK) )
-                {
-                    lightDistance(eLight, fCurrentTime, eLight[LIGHT_FLAGS] & FLAG_REVERSE ? true : false)
-                    bModified = true
-                }
+                bModified = true
+            }
 
-                if ( eLight[LIGHT_NEXT_SHOW] > 0.0
-                && fCurrentTime >= eLight[LIGHT_NEXT_SHOW] )
-                {
-                    eLight[LIGHT_FLAGS] |= FLAG_ACTIVE
-                    eLight[LIGHT_NEXT_SHOW] = 0.0
+            if ( eLight[LIGHT_NEXT_RANDOM] > 0.0
+            && fCurrentTime >= eLight[LIGHT_NEXT_RANDOM] )
+            {
+                new iColor = random(sizeof(g_iLightColors))
+                eLight[LIGHT_DLIGHT_COLOR][0] = g_iLightColors[iColor][0]
+                eLight[LIGHT_DLIGHT_COLOR][1] = g_iLightColors[iColor][1]
+                eLight[LIGHT_DLIGHT_COLOR][2] = g_iLightColors[iColor][2]
+                eLight[LIGHT_NEXT_RANDOM] = fCurrentTime + random_float(eLight[LIGHT_COLOR_FREQUENCY][0], eLight[LIGHT_COLOR_FREQUENCY][1])
 
-                    lightSetState(eLight)
-                    eLight[LIGHT_FLAGS] &= ~FLAG_PENDING
-                    eLight[LIGHT_NEXT_IDLE] = fCurrentTime + (LIGHT_DEPLOY_DURATION / eLight[LIGHT_FRAMERATE])
+                bModified = true
+            }
 
-                    bModified = true
-                }
+            if ( eLight[LIGHT_NEXT_HIDE] > 0.0
+            && fCurrentTime >= eLight[LIGHT_NEXT_HIDE] )
+            {
+                eLight[LIGHT_FLAGS] &= ~FLAG_ACTIVE
+                eLight[LIGHT_FLAGS] |= FLAG_PENDING
+                eLight[LIGHT_NEXT_HIDE] = 0.0
+
+                lightSetState(eLight)
+                bModified = true
+            }
+        }
+        else
+        {
+            if ( eLight[LIGHT_FLAGS] & FLAG_REVERSE
+            && eLight[LIGHT_FLAGS] & FLAG_LOCK )
+                lightDraw(eLight)
+
+            if ( eLight[LIGHT_FLAGS] & FLAG_PENDING
+            && !(eLight[LIGHT_FLAGS] & FLAG_LOCK) )
+            {
+                lightDistance(eLight, fCurrentTime, eLight[LIGHT_FLAGS] & FLAG_REVERSE ? true : false)
+                bModified = true
+            }
+
+            if ( eLight[LIGHT_NEXT_SHOW] > 0.0
+            && fCurrentTime >= eLight[LIGHT_NEXT_SHOW] )
+            {
+                eLight[LIGHT_FLAGS] |= FLAG_ACTIVE
+                eLight[LIGHT_NEXT_SHOW] = 0.0
+
+                lightSetState(eLight)
+                eLight[LIGHT_FLAGS] &= ~FLAG_PENDING
+                eLight[LIGHT_NEXT_IDLE] = fCurrentTime + (LIGHT_DEPLOY_DURATION / eLight[LIGHT_FRAMERATE])
+
+                bModified = true
             }
         }
 

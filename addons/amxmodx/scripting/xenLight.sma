@@ -23,7 +23,6 @@
 
 #include <amxmodx>
 #include <amxmisc>
-#include <cstrike>
 #include <fakemeta>
 #include <hamsandwich>
 #include <xs>
@@ -1519,7 +1518,7 @@ public lightTask()
 
 stock lightCreate(id, iItem)
 {
-    new iEnt = cs_create_entity("info_target")
+    new iEnt = engfunc(EngFunc_CreateNamedEntity, engfunc(EngFunc_AllocString, "info_target"))
     if ( !pev_valid(iEnt) )
         return
 
@@ -1570,7 +1569,7 @@ stock lightCreate(id, iItem)
 
 stock lightCreateGlow(eLight[LIGHT])
 {
-    new iEnt = cs_create_entity("env_sprite")
+    new iEnt = engfunc(EngFunc_CreateNamedEntity, engfunc(EngFunc_AllocString, "env_sprite"))
     if ( !pev_valid(iEnt) )
         return
 
@@ -1945,8 +1944,8 @@ stock lightDistance(eLight[LIGHT], Float:fCurrentTime, bool:bSetState)
     for ( id = 1; id <= g_iMaxPlayers; id ++ )
     {
         if ( !is_user_alive(id)
-        || ( !(eLight[LIGHT_FLAGS] & FLAG_REVERSE) && CsTeams:eLight[LIGHT_TEAM] & cs_get_user_team(id))
-        || ( eLight[LIGHT_FLAGS] & FLAG_REVERSE && !(CsTeams:eLight[LIGHT_TEAM] & cs_get_user_team(id))) )
+        || ( !(eLight[LIGHT_FLAGS] & FLAG_REVERSE) && eLight[LIGHT_TEAM] & get_user_team(id))
+        || ( eLight[LIGHT_FLAGS] & FLAG_REVERSE && !(eLight[LIGHT_TEAM] & get_user_team(id))) )
             continue
 
         pev(id, pev_origin, fOrigin)

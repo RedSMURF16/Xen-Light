@@ -45,3 +45,5 @@ Lights can be placed, managed and configured during gameplay with runtime contro
 ```text
 * v1.0: Initial release.
 ```
+
+[![Watch on YouTube](https://img.shields.io/badge/YouTube-Watch%20video-FF0000?logo=youtube&logoColor=white)](https://www.youtube.com/watch?v=FCs2yVY4mEQ)

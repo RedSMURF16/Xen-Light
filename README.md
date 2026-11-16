@@ -15,6 +15,10 @@ Lights can be placed, managed and configured during gameplay with runtime contro
 - Configurable glow sprites with adjustable animation, scale, transparency and visibility distance
 - Custom light setups are saved per map and automatically loaded on every map start
 
+## 📋 Requirements
+- ReGameDLL
+- AMX Mod X 1.10+
+
 ## 💬 Commands
 - `say /xl` - Opens the Xen Light menu.
 - `say_team /xl` - Opens the Xen Light menu.

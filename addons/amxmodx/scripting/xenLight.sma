@@ -1534,6 +1534,7 @@ stock lightCreate(id, iItem)
         g_ePlayerData[id][PDATA_OFFSET] = LIGHT_OFFSET_BASE
 
         eLight[LIGHT_FLAGS] |= FLAG_GHOST
+        eLight[LIGHT_SIZE] = g_ePlayerData[id][PDATA_ROTATE_SIZE]
     }
 
     lightSelect(eLight, TARGET_GHOST)
@@ -1826,7 +1827,8 @@ public fwdPreThink(id)
             lightTrace(eLight, id)
         }
     }
-    else if ( g_ePlayerData[id][PDATA_LIGHT_ACTION] )
+    else if ( g_ePlayerData[id][PDATA_LIGHT_ACTION]
+    && !(eLight[LIGHT_FLAGS] & FLAG_LOCK) )
     {
         lightCheck(id)
     }

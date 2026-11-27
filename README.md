@@ -1,7 +1,7 @@
 <h1 align="center">Xen Light</h1>
 
 <p align="center">
-  <a href="https://www.youtube.com/watch?v=FCs2yVY4mEQ"><img src="https://img.youtube.com/vi/FCs2yVY4mEQ/maxresdefault.jpg" alt="Watch on YouTube" width="600"></a>
+  <img src="images/demo.gif" alt="Xen Light">
 </p>
 
 ## 📝 Description
